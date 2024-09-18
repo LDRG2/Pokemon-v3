@@ -1,0 +1,126 @@
+const readline = require('readline');
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+});
+
+// Define Pokémon with levels and healing items
+let playerPokemons = [
+    { name: 'Pikachu', hp: 80, level: 5, moves: [{ name: 'Thunderbolt', damage: 25 }, { name: 'Quick Attack', damage: 15 }] },
+    { name: 'Charmander', hp: 70, level: 5, moves: [{ name: 'Ember', damage: 20 }, { name: 'Scratch', damage: 10 }] },
+];
+
+let opponentPokemon = { name: 'Charizard', hp: 150, level: 10 };
+
+// Items available for the player
+let items = [{ name: 'Potion', heal: 20 }];
+
+let currentPlayerPokemon = playerPokemons[0];
+
+function displayStatus() {
+    console.log(`\nYour Pokémon: ${currentPlayerPokemon.name} (HP: ${currentPlayerPokemon.hp})`);
+    console.log(`Opponent Pokémon: ${opponentPokemon.name} (HP: ${opponentPokemon.hp})`);
+    console.log('Available moves:');
+    currentPlayerPokemon.moves.forEach((move, index) => {
+        console.log(`${index + 1}: ${move.name} (Damage: ${move.damage})`);
+    });
+    console.log('Items:');
+    items.forEach((item, index) => {
+        console.log(`${index + 1}: ${item.name} (Heal: ${item.heal})`);
+    });
+}
+
+function battle() {
+    displayStatus();
+    rl.question('Enter your move number (or "switch" to change Pokémon, "item" to use an item, or "exit" to quit): ', (answer) => {
+        if (answer.toLowerCase() === 'exit') {
+            console.log('Exiting the battle.');
+            rl.close();
+            return;
+        }
+
+        if (answer.toLowerCase() === 'switch') {
+            switchPokemon();
+            return;
+        }
+
+        if (answer.toLowerCase() === 'item') {
+            useItem();
+            return;
+        }
+
+        const moveIndex = parseInt(answer) - 1;
+        if (!isNaN(moveIndex) && moveIndex >= 0 && moveIndex < currentPlayerPokemon.moves.length) {
+            const move = currentPlayerPokemon.moves[moveIndex];
+            console.log(`You used ${move.name}!`);
+            opponentPokemon.hp -= move.damage;
+            console.log(`It dealt ${move.damage} damage!`);
+
+            if (opponentPokemon.hp <= 0) {
+                console.log(`You defeated ${opponentPokemon.name}!`);
+                rl.close();
+                return;
+            }
+
+            // Opponent's turn
+            const opponentDamage = 20; // Fixed damage for simplicity
+            currentPlayerPokemon.hp -= opponentDamage;
+            console.log(`${opponentPokemon.name} attacked and dealt ${opponentDamage} damage!`);
+
+            if (currentPlayerPokemon.hp <= 0) {
+                console.log(`Your ${currentPlayerPokemon.name} fainted!`);
+                rl.close();
+                return;
+            }
+
+            // Continue the battle
+            battle();
+        } else {
+            console.log('Invalid move. Please try again.');
+            battle();
+        }
+    });
+}
+
+function switchPokemon() {
+    console.log('Choose a Pokémon to switch to:');
+    playerPokemons.forEach((pokemon, index) => {
+        console.log(`${index + 1}: ${pokemon.name} (HP: ${pokemon.hp})`);
+    });
+
+    rl.question('Enter the number of the Pokémon to switch: ', (answer) => {
+        const switchIndex = parseInt(answer) - 1;
+        if (!isNaN(switchIndex) && switchIndex >= 0 && switchIndex < playerPokemons.length) {
+            currentPlayerPokemon = playerPokemons[switchIndex];
+            console.log(`Switched to ${currentPlayerPokemon.name}!`);
+            battle();
+        } else {
+            console.log('Invalid choice. Returning to battle.');
+            battle();
+        }
+    });
+}
+
+function useItem() {
+    console.log('Choose an item to use:');
+    items.forEach((item, index) => {
+        console.log(`${index + 1}: ${item.name} (Heal: ${item.heal})`);
+    });
+
+    rl.question('Enter the number of the item to use: ', (answer) => {
+        const itemIndex = parseInt(answer) - 1;
+        if (!isNaN(itemIndex) && itemIndex >= 0 && itemIndex < items.length) {
+            const item = items[itemIndex];
+            currentPlayerPokemon.hp += item.heal;
+            console.log(`Used ${item.name}! ${currentPlayerPokemon.name} healed for ${item.heal} HP.`);
+            battle();
+        } else {
+            console.log('Invalid item. Returning to battle.');
+            battle();
+        }
+    });
+}
+
+// Start the battle
+battle();
